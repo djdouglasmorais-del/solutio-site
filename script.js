@@ -62,12 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   // dia -> { tag, escopo }
-  const TAX_DAYS = {
+  // Exposto em window.TAX_DAYS para que o painel admin (via content-loader.js)
+  // possa substituir os prazos sem precisar editar este arquivo.
+  window.TAX_DAYS = window.TAX_DAYS || {
     7:  { tag: 'FGTS', escopo: 'Federal' },
     15: { tag: 'EFD Contribuições', escopo: 'Federal' },
     20: { tag: 'Simples Nacional / INSS', escopo: 'Federal' },
     25: { tag: 'ICMS / IPI', escopo: 'Estadual' },
   };
+  const TAX_DAYS = window.TAX_DAYS;
 
   function renderCalendar() {
     const now = new Date();
@@ -133,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   renderCalendar();
+  window.renderCalendar = renderCalendar;
 
   /* ---------- Formulário de contato (Netlify Forms via AJAX) ---------- */
   const form = document.getElementById('contactForm');
