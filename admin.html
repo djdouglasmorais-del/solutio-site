@@ -61,9 +61,18 @@
   <div id="recoveryView" class="admin-login" hidden>
     <div class="admin-card">
       <h1>Defina sua nova senha</h1>
-      <p class="sub">Você clicou em um link de redefinição de senha. Escolha uma nova senha para continuar.</p>
+      <p class="sub">Você clicou em um link de redefinição de senha e chegou até aqui — escolha uma nova senha para continuar.</p>
       <div class="admin-msg" id="recoveryMsg"></div>
       <form id="recoveryForm">
+        <div class="field" style="display:none;">
+          <label for="recoveryEmail">E-mail</label>
+          <input id="recoveryEmail" type="email" autocomplete="username">
+        </div>
+        <div class="field" style="display:none;">
+          <label for="recoveryCode">Código recebido por e-mail (opcional)</label>
+          <input id="recoveryCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+          <div class="hint">Só preencha se o e-mail que você recebeu trouxer um código numérico.</div>
+        </div>
         <div class="field">
           <label for="newPassword">Nova senha</label>
           <input id="newPassword" type="password" required minlength="8" autocomplete="new-password">

@@ -17,7 +17,17 @@
 
   var supabase = window.supabase.createClient(
     window.SOLUTIO_SUPABASE_URL,
-    window.SOLUTIO_SUPABASE_ANON_KEY
+    window.SOLUTIO_SUPABASE_ANON_KEY,
+    {
+      auth: {
+        // PKCE faz o link de recuperação exigir uma "chave" salva no navegador
+        // que pediu a redefinição. Isso evita que o próprio provedor de e-mail
+        // (ex.: verificação automática de segurança do Gmail) "gaste" o link
+        // sozinho antes da pessoa clicar nele.
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+      },
+    }
   );
   window.__solutioClient = supabase;
 
@@ -230,6 +240,8 @@
     els.loginMsg = document.getElementById('loginMsg');
     els.forgotBtn = document.getElementById('forgotBtn');
     els.recoveryForm = document.getElementById('recoveryForm');
+    els.recoveryEmail = document.getElementById('recoveryEmail');
+    els.recoveryCode = document.getElementById('recoveryCode');
     els.newPassword = document.getElementById('newPassword');
     els.recoveryMsg = document.getElementById('recoveryMsg');
     els.formSections = document.getElementById('formSections');
@@ -281,9 +293,20 @@
   // Autenticação
   // ---------------------------------------------------------------
   function boot() {
+    // Se o link do e-mail chegou expirado/já usado (comum quando o provedor de
+    // e-mail "pré-visita" o link automaticamente), mostra uma mensagem clara
+    // em vez de deixar a pessoa sem entender por que caiu na tela de login.
+    if ((window.location.hash && window.location.hash.indexOf('error=') !== -1) ||
+        (window.location.search && window.location.search.indexOf('error=') !== -1)) {
+      showView('login');
+      showMsg(els.loginMsg, 'O link do e-mail expirou ou já foi usado. Clique em "Esqueci minha senha" para receber um novo link.', false);
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
     // Detecta link de recuperação de senha (Supabase adiciona type=recovery)
     supabase.auth.onAuthStateChange(function (event, session) {
       if (event === 'PASSWORD_RECOVERY') {
+        if (session && session.user && session.user.email) els.recoveryEmail.value = session.user.email;
         showView('recovery');
       } else if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
         if (session) checkAdminAndEnter(session);
@@ -352,27 +375,62 @@
           if (res.error) {
             showMsg(els.loginMsg, 'Erro ao enviar e-mail: ' + res.error.message, false);
           } else {
-            showMsg(els.loginMsg, 'Enviamos um link de redefinição de senha para ' + email + '.', true);
+            els.recoveryEmail.value = email;
+            showMsg(els.loginMsg, 'Enviamos um link de redefinição para ' + email + '. Abra o e-mail nesta mesma aba/navegador e clique no link — esta tela deve avançar sozinha para a troca de senha.', true);
           }
         });
     });
 
     els.recoveryForm.addEventListener('submit', function (e) {
       e.preventDefault();
+      var email = els.recoveryEmail.value.trim();
+      var code = els.recoveryCode.value.trim();
       var pw = els.newPassword.value;
+
       if (pw.length < 8) {
         showMsg(els.recoveryMsg, 'A senha precisa ter pelo menos 8 caracteres.', false);
         return;
       }
-      supabase.auth.updateUser({ password: pw }).then(function (res) {
-        if (res.error) {
-          showMsg(els.recoveryMsg, 'Erro: ' + res.error.message, false);
-        } else {
-          showMsg(els.recoveryMsg, 'Senha atualizada! Entrando...', true);
-          supabase.auth.getSession().then(function (r) {
-            if (r.data && r.data.session) checkAdminAndEnter(r.data.session);
-          });
+
+      function finishWithNewPassword() {
+        supabase.auth.updateUser({ password: pw }).then(function (res) {
+          if (res.error) {
+            showMsg(els.recoveryMsg, 'Erro: ' + res.error.message, false);
+          } else {
+            showMsg(els.recoveryMsg, 'Senha atualizada! Entrando...', true);
+            supabase.auth.getSession().then(function (r) {
+              if (r.data && r.data.session) checkAdminAndEnter(r.data.session);
+            });
+          }
+        });
+      }
+
+      supabase.auth.getSession().then(function (r) {
+        var hasSession = r.data && r.data.session;
+        if (hasSession) {
+          // Já autenticado (ex.: o link do e-mail funcionou e nos deu uma sessão).
+          finishWithNewPassword();
+          return;
         }
+        if (!code) {
+          // Sem sessão e sem código: mostra os campos de e-mail/código como
+          // alternativa manual e explica a situação.
+          els.recoveryEmail.closest('.field').style.display = '';
+          els.recoveryCode.closest('.field').style.display = '';
+          showMsg(els.recoveryMsg, 'Não encontramos uma sessão válida deste link. Se o e-mail trouxer um código, digite seu e-mail e o código acima. Caso contrário, volte à tela de login e clique em "Esqueci minha senha" para pedir um novo link.', false);
+          return;
+        }
+        if (!email) {
+          showMsg(els.recoveryMsg, 'Digite o seu e-mail.', false);
+          return;
+        }
+        supabase.auth.verifyOtp({ email: email, token: code, type: 'recovery' }).then(function (res) {
+          if (res.error) {
+            showMsg(els.recoveryMsg, 'Código inválido ou expirado: ' + res.error.message + ' Peça um novo código clicando em "Esqueci minha senha" na tela de login.', false);
+          } else {
+            finishWithNewPassword();
+          }
+        });
       });
     });
 
@@ -381,16 +439,12 @@
     });
 
     els.changePwBtn.addEventListener('click', function () {
-      var email = els.userEmail.textContent;
-      supabase.auth
-        .resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] })
-        .then(function (res) {
-          if (!res.error) {
-            alert('Enviamos um e-mail para ' + email + ' com um link para trocar sua senha.');
-          } else {
-            alert('Erro: ' + res.error.message);
-          }
-        });
+      // Já está logado: pode simplesmente escolher uma senha nova aqui, sem precisar de e-mail/código.
+      els.recoveryEmail.value = els.userEmail.textContent;
+      els.recoveryCode.value = '';
+      els.newPassword.value = '';
+      showMsg(els.recoveryMsg, 'Escolha sua nova senha abaixo.', true);
+      showView('recovery');
     });
 
     els.saveBtn.addEventListener('click', saveContent);
