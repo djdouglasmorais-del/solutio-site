@@ -40,22 +40,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- Serviços: cards expansíveis ---------- */
+  /* ---------- Serviços: modal com detalhes ---------- */
+  const serviceModal = document.getElementById('serviceModal');
+  const serviceModalIcon = document.getElementById('serviceModalIcon');
+  const serviceModalTitle = document.getElementById('serviceModalTitle');
+  const serviceModalDesc = document.getElementById('serviceModalDesc');
+  const serviceModalBody = document.getElementById('serviceModalBody');
+  const serviceModalClose = document.getElementById('serviceModalClose');
+
+  function openServiceModal(card) {
+    const detail = document.getElementById(card.dataset.target);
+    if (!detail || !serviceModal) return;
+    const iconEl = card.querySelector('.s-icon');
+    serviceModalIcon.className = 's-icon' + (iconEl ? ' ' + iconEl.className.replace('s-icon', '').trim() : '');
+    serviceModalIcon.innerHTML = iconEl ? iconEl.innerHTML : '';
+    serviceModalTitle.textContent = card.querySelector('h3') ? card.querySelector('h3').textContent : '';
+    serviceModalDesc.textContent = card.querySelector('p') ? card.querySelector('p').textContent : '';
+    serviceModalBody.innerHTML = detail.innerHTML;
+    serviceModal.classList.add('open');
+    serviceModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeServiceModal() {
+    if (!serviceModal) return;
+    serviceModal.classList.remove('open');
+    serviceModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+  }
+
   document.querySelectorAll('.service-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const detail = document.getElementById(card.dataset.target);
-      const isOpen = detail.classList.contains('open');
-
-      // fecha os outros
-      document.querySelectorAll('.service-detail.open').forEach(d => d.classList.remove('open'));
-      document.querySelectorAll('.service-card[aria-expanded="true"]').forEach(c => c.setAttribute('aria-expanded', 'false'));
-
-      if (!isOpen) {
-        detail.classList.add('open');
-        card.setAttribute('aria-expanded', 'true');
-        setTimeout(() => detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150);
-      }
-    });
+    card.addEventListener('click', () => openServiceModal(card));
+  });
+  if (serviceModalClose) serviceModalClose.addEventListener('click', closeServiceModal);
+  if (serviceModal) {
+    serviceModal.addEventListener('click', (e) => { if (e.target === serviceModal) closeServiceModal(); });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && serviceModal && serviceModal.classList.contains('open')) closeServiceModal();
   });
 
   /* ---------- Agenda tributária: calendário do mês atual ---------- */
