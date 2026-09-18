@@ -188,4 +188,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+  /* ---------- Scroll reveal: seções aparecem suavemente ao rolar ---------- */
+  const revealEls = document.querySelectorAll('.reveal');
+  const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (revealEls.length && 'IntersectionObserver' in window && !prefersReducedMotion) {
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach((el) => revealObserver.observe(el));
+  } else {
+    // Sem suporte a IntersectionObserver (ou "menos movimento" ativado): mostra tudo direto.
+    revealEls.forEach((el) => el.classList.add('in-view'));
+  }
+
 });

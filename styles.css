@@ -590,3 +590,91 @@ body.modal-open{ overflow:hidden; }
   .main-nav a{ width:100%; padding:12px 0; opacity:1; border-bottom:1px solid var(--bg-2); }
   .header-cta{ display:none; }
 }
+
+/* =========================================================
+   MICROINTERAÇÕES / ANIMAÇÕES SUTIS
+   Tudo aqui é discreto de propósito: baixa amplitude, ciclos
+   lentos (2.2s+), easing suave. Desativado por completo quando
+   o visitante pede menos movimento no sistema (acessibilidade).
+   ========================================================= */
+
+/* ---- Cards flutuantes do hero: flutuação lenta e assíncrona ---- */
+.float-card{ will-change: transform; }
+.float-card.c1{ animation: floatY 6.5s ease-in-out infinite; }
+.float-card.c2{ animation: floatY 7.5s ease-in-out infinite; animation-delay: -2.4s; }
+.float-card.c3{ animation: floatY 7s ease-in-out infinite; animation-delay: -4.6s; }
+@keyframes floatY{
+  0%,100%{ transform: translateY(0); }
+  50%{ transform: translateY(-9px); }
+}
+
+/* ---- Pontinho "ao vivo" (header + hero panel): pulso tipo status online ---- */
+.dot-live{
+  position:relative;
+  animation: dotPulse 2.4s ease-out infinite;
+}
+@keyframes dotPulse{
+  0%{ box-shadow: 0 0 0 0 rgba(34,197,94,.45); }
+  70%{ box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+/* ---- Quadrado dourado do mock-window: brilho suave, tipo "em destaque" ---- */
+.mock-tile.gold{
+  animation: goldBreathe 3.6s ease-in-out infinite;
+}
+@keyframes goldBreathe{
+  0%,100%{ box-shadow: 0 0 0 rgba(201,162,74,0); filter: brightness(1); }
+  50%{ box-shadow: 0 0 26px rgba(201,162,74,.5); filter: brightness(1.1); }
+}
+
+/* ---- Selo "Live" (Índices Econômicos): halo pulsante, reforça "tempo real" ---- */
+.tool-badge.live{
+  animation: liveBadgePulse 2.6s ease-in-out infinite;
+}
+@keyframes liveBadgePulse{
+  0%,100%{ box-shadow: 0 0 0 0 rgba(21,128,61,.32); }
+  50%{ box-shadow: 0 0 0 5px rgba(21,128,61,.12); }
+}
+
+/* ---- Dia de "hoje" no calendário: halo pulsante, mesma linguagem do dot-live ---- */
+.cal-cell.today .num{
+  animation: todayPulse 2.6s ease-in-out infinite;
+}
+@keyframes todayPulse{
+  0%,100%{ box-shadow: 0 0 0 0 rgba(11,29,58,.35); }
+  50%{ box-shadow: 0 0 0 5px rgba(11,29,58,.14); }
+}
+
+/* ---- Botão flutuante do WhatsApp: anel expandindo tipo notificação suave ---- */
+.wa-float{ position:fixed; /* já definido acima; reforça contexto de posicionamento para o ::before */ }
+.wa-float::before{
+  content:"";
+  position:absolute; inset:0; border-radius:50%;
+  background:#22c55e;
+  z-index:-1;
+  animation: waPing 2.6s ease-out infinite;
+}
+@keyframes waPing{
+  0%{ transform: scale(1); opacity:.55; }
+  100%{ transform: scale(1.7); opacity:0; }
+}
+
+/* ---- Scroll reveal: seções aparecem com fade + leve deslocamento ---- */
+.reveal{
+  opacity:0; transform: translateY(24px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.reveal.in-view{ opacity:1; transform:none; }
+
+/* ---- Acessibilidade: respeita "menos movimento" do sistema ---- */
+@media (prefers-reduced-motion: reduce){
+  .float-card.c1, .float-card.c2, .float-card.c3,
+  .dot-live, .mock-tile.gold, .tool-badge.live,
+  .cal-cell.today .num, .wa-float::before{
+    animation: none !important;
+  }
+  .reveal{
+    opacity:1 !important; transform:none !important; transition:none !important;
+  }
+}
