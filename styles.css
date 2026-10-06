@@ -117,8 +117,8 @@ section{ position: relative; }
 .brand-word{ display:flex; flex-direction:column; line-height:1.1; }
 .brand-word strong{ font-family:'Plus Jakarta Sans',sans-serif; font-size:17px; letter-spacing:.03em; color:var(--navy); }
 .brand-word small{ font-size:9px; letter-spacing:.12em; color: var(--muted); font-weight:600; }
-.brand-logo{ height:80px; width:auto; display:block; }
-@media (max-width: 480px){ .brand-logo{ height:64px; } }
+.brand-logo{ height:78px; width:auto; display:block; }
+@media (max-width: 480px){ .brand-logo{ height:60px; } }
 /* Logo vertical do rodapé: maior, para o nome ficar legível */
 .footer-logo{ height:150px; }
 @media (max-width: 480px){ .footer-logo{ height:130px; } }
